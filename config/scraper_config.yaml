@@ -1,0 +1,22 @@
+# Scraping Settings
+scraping:
+  interval: 300  # seconds between scrapes
+  categories:
+    - bikes
+    - electronics
+    - furniture
+  location: "New York, NY"
+  
+# Browser Settings
+browser:
+  type: "chrome"
+  headless: true
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+  proxy:
+    enabled: false
+    url: ""
+    
+# Rate Limiting
+rate_limit:
+  requests_per_minute: 30
+  pause_between_requests: 2  # seconds

@@ -1,0 +1,13 @@
+# LLM Settings
+model:
+  name: "gpt-4"
+  api_key: "${OPENAI_API_KEY}"
+  max_tokens: 500
+  temperature: 0.7
+
+# Analysis Settings
+analysis:
+  summarize: true
+  categorize: true
+  extract_keywords: true
+  confidence_threshold: 0.8
