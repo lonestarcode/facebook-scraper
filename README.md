@@ -1,6 +1,5 @@
 FACEBOOK MARKETPLACE SCRAPER
 
-## Addressing Your Core Requirements
 
 ### 1. Flexible Category Monitoring
 System is designed to monitor any marketplace category. The search functionality allows:
