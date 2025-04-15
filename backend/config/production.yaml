@@ -1,0 +1,72 @@
+# Production configuration for Facebook Marketplace Scraper Services
+
+environment: production
+log_level: INFO
+version: 2.0.0
+metrics_enabled: true
+tracing_enabled: true
+
+# Common database settings for all services
+database:
+  # URL should be set via environment variable DATABASE_URL
+  url: ${DATABASE_URL}
+  pool_size: 20
+  max_overflow: 40
+  pool_timeout: 30
+  pool_recycle: 3600
+  echo: false
+
+# Common Kafka settings for all services
+kafka:
+  # Kafka settings should be set via environment variable KAFKA_BOOTSTRAP_SERVERS
+  bootstrap_servers: ${KAFKA_BOOTSTRAP_SERVERS}
+  topic_prefix: prod.marketplace.
+
+# Common authentication settings for all services
+auth:
+  # Secret should be set via environment variable JWT_SECRET
+  jwt_secret: ${JWT_SECRET}
+  jwt_algorithm: HS256
+  token_expiration_seconds: 86400
+  public_endpoints: "/health,/docs,/openapi.json,/auth/login,/auth/register"
+
+# API service specific settings
+api:
+  host: 0.0.0.0
+  port: 8000
+  debug: false
+  cors_origins: "https://marketplace-scraper.com,https://www.marketplace-scraper.com"
+  
+  # Rate limiting settings
+  rate_limit:
+    enabled: true
+    rate: 100
+    per: 60
+    burst: 300
+    exclude_paths: "/health,/docs,/openapi.json"
+
+# Scraper service specific settings
+scraper:
+  concurrency: 10
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+  request_timeout: 60
+  rate_limit: 2.0
+  max_retries: 5
+  retry_delay: 10
+  # Proxy URL should be set via environment variable PROXY_URL if needed
+  proxy_url: ${PROXY_URL:-null}
+  categories: "furniture,electronics,vehicles,clothing,jewelry,toys,tools,appliances"
+
+# Processor service specific settings
+processor:
+  # No specific settings yet
+
+# Notifications service specific settings
+notification:
+  # SMTP settings should be set via environment variables
+  smtp_host: ${SMTP_HOST}
+  smtp_port: ${SMTP_PORT:-587}
+  smtp_user: ${SMTP_USER}
+  smtp_password: ${SMTP_PASSWORD}
+  from_email: "notifications@marketplace-scraper.com"
+  rate_limit: 1000 

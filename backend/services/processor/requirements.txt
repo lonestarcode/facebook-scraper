@@ -1,0 +1,36 @@
+# Database
+sqlalchemy>=2.0.0
+psycopg2-binary>=2.9.0
+asyncpg>=0.27.0
+
+# Message broker
+confluent-kafka>=2.0.0
+
+# Data Processing
+pandas>=2.0.0
+numpy>=1.24.0
+scikit-learn>=1.2.0
+spacy>=3.5.0
+
+# Machine Learning
+transformers>=4.30.0
+torch>=2.0.0
+tensorflow>=2.12.0
+
+# NLP
+nltk>=3.8.0
+gensim>=4.3.0
+
+# Utilities
+python-dotenv>=1.0.0
+pydantic>=2.0.0
+tenacity>=8.2.0
+
+# Web & Health Checks
+fastapi>=0.100.0
+uvicorn>=0.22.0
+
+# Monitoring
+prometheus-client>=0.16.0
+opentelemetry-api>=1.16.0
+opentelemetry-sdk>=1.16.0 

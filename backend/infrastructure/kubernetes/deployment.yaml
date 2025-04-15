@@ -1,0 +1,273 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: facebook-scraper-config
+data:
+  ENVIRONMENT: "production"
+  LOG_LEVEL: "INFO"
+  KAFKA_BOOTSTRAP_SERVERS: "kafka:9092"
+  DATABASE_HOST: "postgres"
+  DATABASE_PORT: "5432"
+  DATABASE_NAME: "marketplace"
+  DATABASE_USER: "marketplace_user"
+  API_HOST: "0.0.0.0"
+  API_PORT: "8000"
+  SCRAPER_RATE_LIMIT: "5"
+  SCRAPER_CATEGORIES: "electronics,furniture,cars"
+  SCRAPER_MAX_LISTINGS: "100"
+  SCRAPER_SEARCH_RADIUS: "50"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: facebook-scraper-secrets
+type: Opaque
+data:
+  DATABASE_PASSWORD: dGVzdHBhc3N3b3JkMTIzCg==  # base64 encoded
+  SMTP_PASSWORD: c210cHBhc3N3b3JkMTIzCg==      # base64 encoded
+  JWT_SECRET_KEY: and0c2VjcmV0MTIzCg==         # base64 encoded
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: scraper-service
+  labels:
+    app: scraper-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: scraper-service
+  template:
+    metadata:
+      labels:
+        app: scraper-service
+    spec:
+      containers:
+      - name: scraper
+        image: facebook-scraper/scraper:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: health
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+        envFrom:
+        - configMapRef:
+            name: facebook-scraper-config
+        - secretRef:
+            name: facebook-scraper-secrets
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-service
+  labels:
+    app: api-service
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: api-service
+  template:
+    metadata:
+      labels:
+        app: api-service
+    spec:
+      containers:
+      - name: api
+        image: facebook-scraper/api:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8000
+          name: api
+        - containerPort: 8080
+          name: health
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+        envFrom:
+        - configMapRef:
+            name: facebook-scraper-config
+        - secretRef:
+            name: facebook-scraper-secrets
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 8080
+          initialDelaySeconds: 20
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 8080
+          initialDelaySeconds: 40
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 3
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: processor-service
+  labels:
+    app: processor-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: processor-service
+  template:
+    metadata:
+      labels:
+        app: processor-service
+    spec:
+      containers:
+      - name: processor
+        image: facebook-scraper/processor:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: health
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1.5Gi"
+          requests:
+            cpu: "500m"
+            memory: "512Mi"
+        envFrom:
+        - configMapRef:
+            name: facebook-scraper-config
+        - secretRef:
+            name: facebook-scraper-secrets
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notifications-service
+  labels:
+    app: notifications-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: notifications-service
+  template:
+    metadata:
+      labels:
+        app: notifications-service
+    spec:
+      containers:
+      - name: notifications
+        image: facebook-scraper/notifications:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8080
+          name: health
+        resources:
+          limits:
+            cpu: "0.5"
+            memory: "512Mi"
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+        envFrom:
+        - configMapRef:
+            name: facebook-scraper-config
+        - secretRef:
+            name: facebook-scraper-secrets
+        readinessProbe:
+          httpGet:
+            path: /health/ready
+            port: 8080
+          initialDelaySeconds: 20
+          periodSeconds: 15
+          timeoutSeconds: 5
+          failureThreshold: 3
+        livenessProbe:
+          httpGet:
+            path: /health/live
+            port: 8080
+          initialDelaySeconds: 40
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-service
+spec:
+  selector:
+    app: api-service
+  ports:
+  - port: 80
+    targetPort: 8000
+    name: http
+  - port: 8080
+    targetPort: 8080
+    name: health
+  type: ClusterIP
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: api-ingress
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /api
+        pathType: Prefix
+        backend:
+          service:
+            name: api-service
+            port:
+              number: 80 

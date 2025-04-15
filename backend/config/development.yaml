@@ -1,0 +1,67 @@
+# Development configuration for Facebook Marketplace Scraper Services
+
+environment: development
+log_level: DEBUG
+version: 2.0.0
+metrics_enabled: true
+tracing_enabled: false
+
+# Common database settings for all services
+database:
+  url: postgresql+asyncpg://postgres:password@localhost:5432/marketplace
+  pool_size: 5
+  max_overflow: 10
+  pool_timeout: 30
+  pool_recycle: 1800
+  echo: true
+
+# Common Kafka settings for all services
+kafka:
+  bootstrap_servers: localhost:9092
+  topic_prefix: dev.marketplace.
+
+# Common authentication settings for all services
+auth:
+  jwt_secret: "development_jwt_secret_key_change_me_in_production"
+  jwt_algorithm: HS256
+  token_expiration_seconds: 86400
+  public_endpoints: "/health,/docs,/openapi.json,/auth/login,/auth/register"
+
+# API service specific settings
+api:
+  host: 0.0.0.0
+  port: 8000
+  debug: true
+  cors_origins: "*"
+  
+  # Rate limiting settings
+  rate_limit:
+    enabled: true
+    rate: 100
+    per: 60
+    burst: 200
+    exclude_paths: "/health,/docs,/openapi.json"
+
+# Scraper service specific settings
+scraper:
+  concurrency: 3
+  user_agent: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+  request_timeout: 30
+  rate_limit: 1.0
+  max_retries: 3
+  retry_delay: 5
+  proxy_url: null
+  categories: "all"
+
+# Processor service specific settings
+processor:
+  # No specific settings yet
+
+# Notifications service specific settings
+notification:
+  smtp_host: localhost
+  smtp_port: 1025  # Dev SMTP server (e.g., MailHog)
+  smtp_user: ""
+  smtp_password: ""
+  from_email: "notifications@marketplace-scraper.com"
+  rate_limit: 100 
